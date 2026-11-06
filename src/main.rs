@@ -1,6 +1,6 @@
 use macroquad::{prelude::*, window::request_new_screen_size};
 
-use crate::tetris::{Game, Piece};
+use crate::tetris::Game;
 
 mod tetris;
 
@@ -19,15 +19,9 @@ async fn main() {
     loop {
         clear_background(BLACK);
 
-        if !game.is_dropping_piece {
-            game.is_dropping_piece = true;
+        game.step();
+        game.render();
 
-            let new_piece: Piece = Piece::new(game.next_piece);
-            game.board.push(new_piece);
-
-            game.next_piece = rand::RandomRange::gen_range(0, 6);
-        }
-        draw_board(&game);
         next_frame().await;
     }
 }
@@ -39,42 +33,5 @@ fn window_conf() -> Conf {
         window_height: SCREEN_HEIGHT as i32,
         window_resizable: false,
         ..Default::default()
-    }
-}
-
-fn draw_board(game: &Game) {
-    for i in 0..ROWS {
-        draw_line(
-            0.0,
-            i as f32 * CELL_SIZE,
-            SCREEN_WIDTH,
-            i as f32 * CELL_SIZE,
-            1.0,
-            WHITE,
-        );
-    }
-
-    for i in 0..COLUMNS {
-        draw_line(
-            i as f32 * CELL_SIZE,
-            0.0,
-            i as f32 * CELL_SIZE,
-            SCREEN_HEIGHT,
-            1.0,
-            WHITE,
-        );
-    }
-
-    for piece in &game.board {
-        for (i, val) in piece.piece_layout.iter().enumerate() {
-            if !val {
-                continue;
-            }
-
-            let x: f32 = (i % 4) as f32 + (piece.position as usize % COLUMNS) as f32 * CELL_SIZE;
-            let y: f32 = (i / 4) as f32 + (piece.position as usize / COLUMNS) as f32 * CELL_SIZE;
-
-            draw_rectangle(x, y, CELL_SIZE, CELL_SIZE, RED);
-        }
     }
 }
