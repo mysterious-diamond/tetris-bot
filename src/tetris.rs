@@ -1,5 +1,6 @@
 use macroquad::{
     color::{BLACK, BLUE, Color, DARKBLUE, GREEN, ORANGE, PURPLE, RED, WHITE, YELLOW},
+    input::KeyCode,
     prelude::rand,
     shapes::{draw_line, draw_rectangle},
 };
@@ -31,8 +32,21 @@ impl Game {
         }
     }
 
-    pub fn step(&mut self) {
-        self.cur_piece.position += COLUMNS as u8;
+    pub fn step(&mut self, key_pressed_this_tick: KeyCode) {
+        let mut dir_side: i8 = 0;
+        let mut fast_fall: bool = false;
+
+        if key_pressed_this_tick == KeyCode::A || key_pressed_this_tick == KeyCode::Left {
+            dir_side = -1;
+        } else if key_pressed_this_tick == KeyCode::D || key_pressed_this_tick == KeyCode::Right {
+            dir_side = 1;
+        } else if key_pressed_this_tick == KeyCode::S || key_pressed_this_tick == KeyCode::Down {
+            fast_fall = true;
+        }
+
+        self.cur_piece.position +=
+            (dir_side + if fast_fall { 2 * COLUMNS } else { COLUMNS } as i8) as u8;
+
         let on_ground: bool = self.is_cur_piece_on_ground();
 
         if !on_ground {
