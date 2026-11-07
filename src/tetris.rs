@@ -32,44 +32,14 @@ impl Game {
     }
 
     pub fn step(&mut self) {
-        let cur_piece: &mut Piece = &mut self.cur_piece;
-        cur_piece.position += COLUMNS as u8;
-
-        let mut on_ground: bool = false;
-        for (i, val) in cur_piece.piece_layout.iter().enumerate() {
-            if !val {
-                continue;
-            }
-
-            let x: u8 = (cur_piece.position % COLUMNS as u8) + (i % 4) as u8;
-            let y: u8 = (cur_piece.position / COLUMNS as u8) + (i / 4) as u8 - 1;
-
-            let cell_pos: usize = x as usize + y as usize * COLUMNS;
-            let below: usize = cell_pos + COLUMNS;
-
-            if below > ROWS * COLUMNS || self.board[below].0 {
-                on_ground = true;
-                break;
-            }
-        }
+        self.cur_piece.position += COLUMNS as u8;
+        let on_ground: bool = self.is_cur_piece_on_ground();
 
         if !on_ground {
             return;
         }
 
-        for (i, val) in cur_piece.piece_layout.iter().enumerate() {
-            if !val {
-                continue;
-            }
-
-            let x: u8 = (cur_piece.position % COLUMNS as u8) + (i % 4) as u8;
-            let y: u8 = (cur_piece.position / COLUMNS as u8) + (i / 4) as u8 - 1;
-
-            let id: usize = x as usize + y as usize * COLUMNS;
-
-            self.board[id] = (true, cur_piece.color);
-            self.is_dropping_piece = false;
-        }
+        self.insert_piece_to_game_board();
 
         if !self.is_dropping_piece {
             self.is_dropping_piece = true;
@@ -77,7 +47,7 @@ impl Game {
             let new_piece: Piece = Piece::new(self.next_piece);
             self.cur_piece = new_piece;
 
-            self.next_piece = rand::RandomRange::gen_range(0, 6);
+            self.next_piece = rand::RandomRange::gen_range(0, 7);
         }
     }
 
@@ -96,6 +66,44 @@ impl Game {
 
         self.draw_board();
         self.draw_grid();
+    }
+
+    fn is_cur_piece_on_ground(&self) -> bool {
+        let cur_piece: &Piece = &self.cur_piece;
+        for (i, val) in cur_piece.piece_layout.iter().enumerate() {
+            if !val {
+                continue;
+            }
+
+            let x: u8 = (cur_piece.position % COLUMNS as u8) + (i % 4) as u8;
+            let y: u8 = (cur_piece.position / COLUMNS as u8) + (i / 4) as u8 - 1;
+
+            let cell_pos: usize = x as usize + y as usize * COLUMNS;
+            let below: usize = cell_pos + COLUMNS;
+
+            if below > ROWS * COLUMNS || self.board[below].0 {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn insert_piece_to_game_board(&mut self) {
+        let cur_piece: &Piece = &self.cur_piece;
+        for (i, val) in cur_piece.piece_layout.iter().enumerate() {
+            if !val {
+                continue;
+            }
+
+            let x: u8 = (cur_piece.position % COLUMNS as u8) + (i % 4) as u8;
+            let y: u8 = (cur_piece.position / COLUMNS as u8) + (i / 4) as u8 - 1;
+
+            let id: usize = x as usize + y as usize * COLUMNS;
+
+            self.board[id] = (true, cur_piece.color);
+            self.is_dropping_piece = false;
+        }
     }
 
     fn draw_grid(&self) {
