@@ -11,6 +11,8 @@ const CELL_SIZE: f32 = 40.0;
 const SCREEN_WIDTH: f32 = COLUMNS as f32 * CELL_SIZE;
 const SCREEN_HEIGHT: f32 = ROWS as f32 * CELL_SIZE;
 
+const BASE_TICKS_INTERVAL: f32 = 0.4;
+
 #[macroquad::main(window_conf)]
 async fn main() {
     let mut game: Game = Game::new();
@@ -19,7 +21,7 @@ async fn main() {
     let mut key_pressed_this_tick: KeyCode = KeyCode::Unknown;
 
     // Interval between game steps (in milliseconds)
-    let game_frame_interval_ms: f32 = 0.5;
+    let mut game_frame_interval_ms: f32 = BASE_TICKS_INTERVAL;
     request_new_screen_size(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     loop {
@@ -34,7 +36,7 @@ async fn main() {
 
         if last_game_step >= game_frame_interval_ms {
             last_game_step = 0.0;
-            game.step(key_pressed_this_tick);
+            game.step(key_pressed_this_tick, &mut game_frame_interval_ms);
             key_pressed_this_tick = KeyCode::Unknown;
         } else {
             last_game_step += get_frame_time();

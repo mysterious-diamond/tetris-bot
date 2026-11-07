@@ -5,7 +5,7 @@ use macroquad::{
     shapes::{draw_line, draw_rectangle},
 };
 
-use crate::{CELL_SIZE, COLUMNS, ROWS, SCREEN_HEIGHT, SCREEN_WIDTH};
+use crate::{BASE_TICKS_INTERVAL, CELL_SIZE, COLUMNS, ROWS, SCREEN_HEIGHT, SCREEN_WIDTH};
 
 pub struct Game {
     pub board: Vec<(bool, Color)>,
@@ -32,7 +32,7 @@ impl Game {
         }
     }
 
-    pub fn step(&mut self, key_pressed_this_tick: KeyCode) {
+    pub fn step(&mut self, key_pressed_this_tick: KeyCode, ticks: &mut f32) {
         let mut dir_side: i8 = 0;
         let mut fast_fall: bool = false;
 
@@ -44,8 +44,12 @@ impl Game {
             fast_fall = true;
         }
 
-        self.cur_piece.position +=
-            (dir_side + if fast_fall { 2 * COLUMNS } else { COLUMNS } as i8) as u8;
+        self.cur_piece.position += (dir_side + COLUMNS as i8) as u8;
+        if fast_fall {
+            *ticks = BASE_TICKS_INTERVAL / 2.0;
+        } else {
+            *ticks = BASE_TICKS_INTERVAL;
+        }
 
         let on_ground: bool = self.is_cur_piece_on_ground();
 
