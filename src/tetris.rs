@@ -1,5 +1,5 @@
 use macroquad::{
-    color::{BLUE, Color, DARKBLUE, GREEN, ORANGE, PURPLE, RED, WHITE, YELLOW},
+    color::{BLACK, BLUE, Color, DARKBLUE, GREEN, ORANGE, PURPLE, RED, WHITE, YELLOW},
     prelude::rand,
     shapes::{draw_line, draw_rectangle},
 };
@@ -24,14 +24,53 @@ impl Game {
         let cur_piece_type: u8 = rand::RandomRange::gen_range(0, 6);
         let next_piece: u8 = rand::RandomRange::gen_range(0, 6);
         Game {
-            board: Vec::new(),
+            board: vec![(false, BLACK); ROWS * COLUMNS],
             cur_piece: Piece::new(cur_piece_type),
             next_piece,
-            is_dropping_piece: false,
+            is_dropping_piece: true,
         }
     }
 
     pub fn step(&mut self) {
+        let cur_piece: &mut Piece = &mut self.cur_piece;
+        cur_piece.position += COLUMNS as u8;
+
+        let mut on_ground: bool = false;
+        for (i, val) in cur_piece.piece_layout.iter().enumerate() {
+            if !val {
+                continue;
+            }
+
+            let x: u8 = (cur_piece.position % COLUMNS as u8) + (i % 4) as u8;
+            let y: u8 = (cur_piece.position / COLUMNS as u8) + (i / 4) as u8 - 1;
+
+            let cell_pos: usize = x as usize + y as usize * COLUMNS;
+            let below: usize = cell_pos + COLUMNS;
+
+            if below > ROWS * COLUMNS || self.board[below].0 {
+                on_ground = true;
+                break;
+            }
+        }
+
+        if !on_ground {
+            return;
+        }
+
+        for (i, val) in cur_piece.piece_layout.iter().enumerate() {
+            if !val {
+                continue;
+            }
+
+            let x: u8 = (cur_piece.position % COLUMNS as u8) + (i % 4) as u8;
+            let y: u8 = (cur_piece.position / COLUMNS as u8) + (i / 4) as u8 - 1;
+
+            let id: usize = x as usize + y as usize * COLUMNS;
+
+            self.board[id] = (true, cur_piece.color);
+            self.is_dropping_piece = false;
+        }
+
         if !self.is_dropping_piece {
             self.is_dropping_piece = true;
 
@@ -55,6 +94,11 @@ impl Game {
             draw_rectangle(x, y, CELL_SIZE, CELL_SIZE, piece.color);
         }
 
+        self.draw_board();
+        self.draw_grid();
+    }
+
+    fn draw_grid(&self) {
         for i in 0..ROWS {
             draw_line(
                 0.0,
@@ -75,6 +119,21 @@ impl Game {
                 1.0,
                 WHITE,
             );
+        }
+    }
+
+    fn draw_board(&self) {
+        for (i, val) in self.board.iter().enumerate() {
+            let filled: bool = val.0;
+
+            if !filled {
+                continue;
+            }
+
+            let x: f32 = (i % COLUMNS) as f32 * CELL_SIZE;
+            let y: f32 = (i / COLUMNS) as f32 * CELL_SIZE;
+
+            draw_rectangle(x, y, CELL_SIZE, CELL_SIZE, val.1);
         }
     }
 }
