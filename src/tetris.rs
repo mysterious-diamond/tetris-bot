@@ -44,7 +44,8 @@ impl Game {
             fast_fall = true;
         }
 
-        self.cur_piece.position += (dir_side + COLUMNS as i8) as u8;
+        self.try_move_to_side(dir_side);
+        self.cur_piece.position += COLUMNS as u8;
         if fast_fall {
             *ticks = BASE_TICKS_INTERVAL / 2.0;
         } else {
@@ -86,6 +87,39 @@ impl Game {
         self.draw_grid();
     }
 
+    // Tries to move the current piece to either the left or Right
+    // dir_side: 1 -> Right
+    // dir_side: 0 -> Nothing
+    // dir_side: -1 -> Left
+    fn try_move_to_side(&mut self, dir_side: i8) {
+        let cur_piece: &mut Piece = &mut self.cur_piece;
+        let new_piece_pos: u8 = (cur_piece.position as i8 + dir_side) as u8;
+
+        for (i, val) in cur_piece.piece_layout.iter().enumerate() {
+            if !val {
+                continue;
+            }
+
+            let layout_row: u8 = (i / 4) as u8;
+            let layout_column: u8 = (i % 4) as u8;
+            let relative_layout_pos: u8 = layout_column + layout_row * COLUMNS as u8;
+
+            let real_pos: u8 = cur_piece.position + relative_layout_pos;
+            let new_real_pos: u8 = new_piece_pos + relative_layout_pos;
+
+            if new_real_pos as usize >= ROWS * COLUMNS || self.board[new_real_pos as usize].0 {
+                return;
+            }
+
+            if real_pos / COLUMNS as u8 != new_real_pos / COLUMNS as u8 {
+                println!("Not same row!, {}, {}", real_pos, new_real_pos);
+                return;
+            }
+        }
+
+        cur_piece.position = (cur_piece.position as i8 + dir_side) as u8;
+    }
+
     fn is_cur_piece_on_ground(&self) -> bool {
         let cur_piece: &Piece = &self.cur_piece;
         for (i, val) in cur_piece.piece_layout.iter().enumerate() {
@@ -99,7 +133,7 @@ impl Game {
             let cell_pos: usize = x as usize + y as usize * COLUMNS;
             let below: usize = cell_pos + COLUMNS;
 
-            if below > ROWS * COLUMNS || self.board[below].0 {
+            if below >= ROWS * COLUMNS || self.board[below].0 {
                 return true;
             }
         }
