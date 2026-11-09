@@ -34,6 +34,7 @@ impl Game {
 
     pub fn step(&mut self, key_pressed_this_tick: KeyCode, ticks: &mut f32) {
         let mut dir_side: i8 = 0;
+        let mut dir_rotate: i8 = 0;
         let mut fast_fall: bool = false;
 
         if key_pressed_this_tick == KeyCode::A || key_pressed_this_tick == KeyCode::Left {
@@ -42,12 +43,17 @@ impl Game {
             dir_side = 1;
         } else if key_pressed_this_tick == KeyCode::S || key_pressed_this_tick == KeyCode::Down {
             fast_fall = true;
+        } else if key_pressed_this_tick == KeyCode::Q {
+            dir_rotate = -1;
+        } else if key_pressed_this_tick == KeyCode::E {
+            dir_rotate = 1;
         }
 
+        self.try_rotate_to_side(dir_rotate);
         self.try_move_to_side(dir_side);
         self.cur_piece.position += COLUMNS as u8;
         if fast_fall {
-            *ticks = BASE_TICKS_INTERVAL / 2.0;
+            *ticks = BASE_TICKS_INTERVAL / 2.5;
         } else {
             *ticks = BASE_TICKS_INTERVAL;
         }
@@ -69,7 +75,6 @@ impl Game {
             self.next_piece = rand::RandomRange::gen_range(0, 7);
         }
     }
-
     pub fn render(&self) {
         let piece: &Piece = &self.cur_piece;
         for (i, val) in piece.piece_layout.iter().enumerate() {
@@ -87,6 +92,45 @@ impl Game {
         self.draw_grid();
     }
 
+    fn try_rotate_to_side(&mut self, dir_rotate: i8) {
+        let cur_piece: &mut Piece = &mut self.cur_piece;
+
+        if dir_rotate == -1 {
+            let mut new_layout = vec![false; 4 * 4];
+            for (i, val) in cur_piece.piece_layout.iter().enumerate() {
+                if !val {
+                    continue;
+                }
+
+                let row: u8 = i as u8 / 4;
+                let column: u8 = i as u8 % 4;
+
+                let new_index: u8 = (3 - column) * 4 + row;
+
+                let new_real_row: u8 = (cur_piece.position / COLUMNS as u8) + (new_index / 4);
+                let new_real_column: u8 = (cur_piece.position % COLUMNS as u8) + (new_index % 4);
+                let new_real_pos: u8 = new_real_column + new_real_row * COLUMNS as u8;
+
+                if new_real_pos as usize >= ROWS * COLUMNS || self.board[new_real_pos as usize].0 {
+                    return;
+                }
+                new_layout[new_index as usize] = true;
+            }
+
+            for i in 0..4u8 {
+                let supposed_row: u8 = cur_piece.position / COLUMNS as u8 + i;
+                for j in 1..4u8 {
+                    let row = (cur_piece.position + j) / COLUMNS as u8 + i;
+
+                    if supposed_row != row {
+                        return;
+                    }
+                }
+            }
+
+            cur_piece.piece_layout = new_layout;
+        }
+    }
     // Tries to move the current piece to either the left or Right
     // dir_side: 1 -> Right
     // dir_side: 0 -> Nothing
@@ -181,7 +225,6 @@ impl Game {
             );
         }
     }
-
     fn draw_board(&self) {
         for (i, val) in self.board.iter().enumerate() {
             let filled: bool = val.0;

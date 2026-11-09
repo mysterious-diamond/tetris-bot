@@ -11,7 +11,7 @@ const CELL_SIZE: f32 = 40.0;
 const SCREEN_WIDTH: f32 = COLUMNS as f32 * CELL_SIZE;
 const SCREEN_HEIGHT: f32 = ROWS as f32 * CELL_SIZE;
 
-const BASE_TICKS_INTERVAL: f32 = 0.8;
+const BASE_TICKS_INTERVAL: f32 = 0.6;
 
 #[macroquad::main(window_conf)]
 async fn main() {
