@@ -65,6 +65,7 @@ impl Game {
         }
 
         self.insert_piece_to_game_board();
+        self.remove_cleared_lines();
 
         if !self.is_dropping_piece {
             self.is_dropping_piece = true;
@@ -199,6 +200,33 @@ impl Game {
 
             self.board[id] = (true, cur_piece.color);
             self.is_dropping_piece = false;
+        }
+    }
+    fn remove_cleared_lines(&mut self) {
+        let mut row: u8 = 0;
+        while row < ROWS as u8 {
+            let mut cleared: bool = true;
+            for col in 0..COLUMNS {
+                let cell: u8 = row * COLUMNS as u8 + col as u8;
+                if !self.board[cell as usize].0 {
+                    cleared = false;
+                    break;
+                }
+            }
+
+            if !cleared {
+                row += 1;
+                continue;
+            }
+
+            let mut cell: u8 = row * COLUMNS as u8 + COLUMNS as u8 - 1;
+            while cell >= COLUMNS as u8 {
+                self.board[cell as usize] = self.board[cell as usize - COLUMNS];
+
+                cell -= 1;
+            }
+
+            row += 1;
         }
     }
 
